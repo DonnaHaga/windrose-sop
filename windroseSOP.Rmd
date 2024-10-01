@@ -1,0 +1,91 @@
+---
+title: "SOP for Wind & Other Roses Using `openair`"
+author: |
+  | Donna Haga/Ben Weinstein
+  | Air Quality Section (Assessments) | Environmental Protection
+  | Ministry of Environment and Climate Change Strategy
+date: "`r format(Sys.Date(),'%B %d, %Y')`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+*(This is an RMarkdown document)*
+
+# Context
+
+The `windRose` function in the `openair`package defines calms as 0m/s, without the option of changing the threshold; changing the lowest cutpoint does not change the percentage calms shown in the bottom right of the figure. The Air Quality Section uses a 0.5 m/s threshold for defining calms, for the following reasons:
+
+*    The [Beaufort scale](https://en.wikipedia.org/wiki/Beaufort_scale) is probably the main meteorological wind scale, and uses a cutoff for calms of 0.3 m/s. However, from the perspective of air pollution meteorology, 0.5 m/s is the most appropriate cutoff for calms. RM Young-AQ specific anemometers have an instrument starting threshold of 0.5 m/s (most other anemometers have a starting threshold of 1 m/s); at speeds less than 0.5 m/s resistance in the bearings stops the anemometer from turning.
+*    If you look at historic Environment and Climate Change Canada wind speeds, anything less than 1 km/h (0.2778 m/s) is too slow for instruments to measure.
+*    In balancing actual calm (where the wind is not blowing) with instrument calm it makes sense for 0.5 m/s to be the appropriate value.
+
+Below is a script that:
+
+*   uses __0.5m/s__ as the threshold for calms;
+*   adds a subtitle to the plot giving the percentage of calms based on a 0.5 m/s threshold;
+*   when `ws` and `wd` are not paired i.e. one or the other is `NA`, both are set equal to `NA`.
+*   creates a dataframe `roseData` that has all `ws` values below 0.5m/s[^1] removed; `roseData` should be used for all `windRose` type plots i.e. `pollutionRose`, `percentileRose`, `polarFreq`, `polarPlot`. 
+*   creates a wind rose with standard features:
+     + Beaufort wind scale cut points (with 0.5 m/s calm threshold applied)
+     + 16 spokes
+
+[^1]: Openair newsletter: "However, this is no longer necessary and calm conditions will now be included in all calculations. Openair therefore tries to use all data in the form that is provided to it. Note, however that this occasionally may give unusual results. For example, the UK Met Office allocates calm conditions to 0 degrees wind direction and analysing data sometimes may result in anomalous results for northerly winds."
+
+# Script/Analysis
+
+__Note: The script below uses the built-in dataset in the `openair` package called `mydata`. You must change `mydata` below to the name of your imported dataset and it must have the same format as `mydata` to work. __
+
+```{r setup, include=TRUE}
+#only needed for RMarkdown
+knitr::opts_chunk$set(echo = TRUE,
+                      warning=FALSE,
+                      message=FALSE)
+```
+
+
+```{r windRose}
+# required packages
+library(openair)
+library(dplyr)
+
+#only use paired wd/ws data
+data<-mydata %>% 
+  mutate(ws=ifelse(is.na(wd),NA,ws),
+         wd=ifelse(is.na(ws),NA,wd))
+
+#number of calm hours
+ncalm<-data %>% 
+  filter(ws<0.5) %>% 
+  summarise(calms=n())
+
+#total number of valid ws hours
+ntotal<-data %>% 
+  filter(!is.na(ws)) %>% 
+  summarise(total=n())
+
+#percentage calm (ws<0.5 m/s)
+pcalm<-round(100*ncalm/ntotal,
+             digits=2)
+
+#filter out calm data
+roseData<- data %>% 
+  filter(ws>=0.5)
+
+#windRose
+windRose(roseData,
+         annotate=FALSE,
+         breaks = c(0.5,1.5,3.3,5.5,7.9,10.7,13.8,17.1), #Beaufort scale with 0.5 as lowest cut point.
+         sub=paste("Calms (<0.5m/s)=",pcalm,"%"),
+         key.position = "right",
+         main="Wind Rose",
+         angle=360/16, #16 spokes
+         cols = "jet",
+         paddle=FALSE) 
+```
+
+# Contact
+Please use the contact information below should you have any concerns or questions about this SOP:
+
+-    Donna Haga, [donna.haga@gov.bc.ca](mailto:donna.haga@gov.bc.ca), 250-420-6320.
