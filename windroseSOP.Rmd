@@ -45,7 +45,7 @@ knitr::opts_chunk$set(echo = TRUE,
 ```
 
 
-```{r windRose}
+```{r wind-rose}
 # required packages
 library(openair)
 library(dplyr)
@@ -70,11 +70,11 @@ pcalm<-round(100*ncalm/ntotal,
              digits=2)
 
 #filter out calm data
-roseData<- data %>% 
+rose_data<- data %>% 
   filter(ws>=0.5)
 
 #windRose
-windRose(roseData,
+windRose(rose_data,
          annotate=FALSE,
          breaks = c(0.5,1.5,3.3,5.5,7.9,10.7,13.8,17.1), #Beaufort scale with 0.5 as lowest cut point.
          sub=paste("Calms (<0.5m/s)=",pcalm,"%"),
@@ -84,6 +84,12 @@ windRose(roseData,
          cols = "jet",
          paddle=FALSE) 
 ```
+
+```{r pollution-rose}
+openair::pollutionRose(rose_data,
+                       pollutant="pm25")
+```
+
 
 # Contact
 Please use the contact information below should you have any concerns or questions about this SOP:
