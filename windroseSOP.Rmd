@@ -86,8 +86,19 @@ windRose(rose_data,
 ```
 
 ```{r pollution-rose}
-openair::pollutionRose(rose_data,
-                       pollutant="pm25")
+
+openair::pollutionRose(
+  rose_data,
+  pollutant = "pm25",
+  annotate = FALSE,
+  sub = paste("Calms (<0.5m/s)=", pcalm, "%"),
+  key.position = "right",
+  main = "Pollution Rose",
+  angle = 360 / 16,
+  #16 spokes
+  cols = "jet",
+  paddle = FALSE
+)
 ```
 
 
